@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
@@ -11,6 +11,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI()
+
+def verifier_mot_de_passe(x_api_key: str = Header(...)):
+    mot_de_passe_attendu = os.getenv("ADMIN_PASSWORD")
+    if x_api_key != mot_de_passe_attendu:
+        raise HTTPException(status_code=403, detail="Accès refusé : mauvais mot de passe")
 
 # 2. On autorise ton futur frontend web à communiquer avec l'API
 app.add_middleware(
@@ -44,7 +49,7 @@ def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
 # 4. La Route POST : insérer une canette
-@app.post("/api/canettes/")
+@app.post("/api/canettes/", dependencies=[Depends(verifier_mot_de_passe)])
 def ajouter_canette(canette: CanetteForm):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -140,7 +145,7 @@ def rechercher_canettes(
         cursor.close()
         conn.close()
 
-@app.put("/api/canettes/{id_canette}")
+@app.put("/api/canettes/{id_canette}", dependencies=[Depends(verifier_mot_de_passe)])
 def modifier_canette(id_canette: int, canette: CanetteForm):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -167,7 +172,7 @@ def modifier_canette(id_canette: int, canette: CanetteForm):
         cursor.close()
         conn.close()
 
-@app.delete("/api/canettes/{id_canette}")
+@app.delete("/api/canettes/{id_canette}", dependencies=[Depends(verifier_mot_de_passe)])
 def supprimer_canette(id_canette: int):
     conn = get_db_connection()
     cursor = conn.cursor()

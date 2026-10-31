@@ -41,6 +41,9 @@
         <label for="date">Date d'ajout *</label>
         <input type="text" id="date" required placeholder="MM-YYYY ou YYYY-MM">
         
+        <label for="password">Mot de passe administrateur *</label>
+        <input type="password" id="password" required placeholder="Code secret">
+
         <button type="submit">Ajouter à la collection</button>
     </form>
     
@@ -69,6 +72,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
+                    'x-api-key': document.getElementById('password').value
                 },
                 body: JSON.stringify(donnees)
             });
