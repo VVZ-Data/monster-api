@@ -3,14 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajout - Collection Monster</title>
+    <title>Gestion - Collection Monster</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: #fff; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: #2c2c2c; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        label { display: block; margin-top: 15px; font-weight: bold; color: #90ee90; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tabs button { margin-top: 0; background: #444; color: #fff; padding: 10px; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1; }
+        .tabs button.active { background: #90ee90; color: #000; }
+        
+        label { display: block; margin-top: 15px; font-weight: bold; color: #90ee90; font-size: 0.9em; }
         input, select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #444; background: #444; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; margin-top: 20px; background: #90ee90; color: #000; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #76c776; }
+        
+        button.action-btn { width: 100%; padding: 10px; margin-top: 20px; background: #90ee90; color: #000; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        button.action-btn:hover { background: #76c776; }
+        button.btn-danger { background: #ff6b6b; color: white; }
+        button.btn-danger:hover { background: #e55a5a; }
+        
+        .action-group { display: flex; gap: 10px; }
         #message { margin-top: 15px; text-align: center; font-weight: bold; }
         .success { color: #90ee90; }
         .error { color: #ff6b6b; }
@@ -21,80 +30,214 @@
 <body>
 
 <div class="container">
-    <h2>Nouvelle Canette 🟢</h2>
+    <h2>Gestion Canette 🟢</h2>
     <a href="recherche.html" class="nav-link">Voir ma collection →</a>
-    <form id="form-monster">
-        
-        <label for="nom">Nom de la canette *</label>
-        <input type="text" id="nom" required placeholder="ex: Mango Loco">
-        
-        <label for="gamme">Gamme *</label>
-        <input type="text" id="gamme" required placeholder="ex: Juice, Ultra...">
-        
-        <label for="pays">Pays d'origine (Optionnel)</label>
-        <input type="text" id="pays" placeholder="ex: USA">
-        
-        <label for="etat">État de la canette *</label>
-        <select id="etat" required>
-            <option value="Parfait état">Parfait état</option>
-            <option value="Abîmée">Abîmée</option>
-            <option value="Très abîmée">Très abîmée</option>
-        </select>
-        
-        <label for="date">Date d'ajout *</label>
-        <input type="text" id="date" required placeholder="MM-YYYY ou YYYY-MM">
-        
-        <label for="password">Mot de passe administrateur *</label>
-        <input type="password" id="password" required placeholder="Code secret">
 
-        <button type="submit">Ajouter à la collection</button>
-    </form>
+    <div class="tabs">
+        <button id="tab-ajouter" class="active" onclick="setMode('ajouter')">Ajouter</button>
+        <button id="tab-modifier" onclick="setMode('modifier')">Modifier / Supprimer</button>
+    </div>
+    
+    <!-- SECTION AJOUTER -->
+    <div id="section-ajouter">
+        <form id="form-ajouter">
+            <label>Nom de la canette *</label><input type="text" id="nom" required>
+            <label>Gamme *</label><input type="text" id="gamme" required>
+            <label>Pays d'origine (Optionnel)</label><input type="text" id="pays">
+            <label>État *</label>
+            <select id="etat" required>
+                <option value="Parfait état">Parfait état</option>
+                <option value="Abîmée">Abîmée</option>
+                <option value="Très abîmée">Très abîmée</option>
+            </select>
+            <label>Date d'ajout *</label><input type="text" id="date" required placeholder="MM-YYYY">
+            <label>Mot de passe *</label><input type="password" id="password-add" required>
+            <button type="submit" class="action-btn">Ajouter à la collection</button>
+        </form>
+    </div>
+
+    <!-- SECTION MODIFIER / SUPPRIMER -->
+    <div id="section-modifier" style="display: none;">
+        <label>Rechercher une canette par son nom :</label>
+        <input type="text" id="search-mod" placeholder="ex: Mango loco...">
+        <select id="select-mod" style="display: none; margin-top: 10px;"></select>
+
+        <form id="form-modifier" style="display: none;">
+            <input type="hidden" id="mod-id">
+            <label>Nom *</label><input type="text" id="mod-nom" required>
+            <label>Gamme *</label><input type="text" id="mod-gamme" required>
+            <label>Pays</label><input type="text" id="mod-pays">
+            <label>État *</label>
+            <select id="mod-etat" required>
+                <option value="Parfait état">Parfait état</option>
+                <option value="Abîmée">Abîmée</option>
+                <option value="Très abîmée">Très abîmée</option>
+            </select>
+            <label>Date *</label><input type="text" id="mod-date" required>
+            <label>Mot de passe *</label><input type="password" id="password-mod" required>
+            
+            <div class="action-group">
+                <button type="submit" class="action-btn">Confirmer</button>
+                <button type="button" class="action-btn btn-danger" onclick="supprimerCanette()">Supprimer</button>
+            </div>
+        </form>
+    </div>
     
     <div id="message"></div>
 </div>
 
 <script>
-    document.getElementById('form-monster').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        
-        const messageDiv = document.getElementById('message');
-        messageDiv.className = '';
-        messageDiv.textContent = 'Envoi en cours...';
+    const API_BASE = 'https://monster-api-victor.onrender.com/api/canettes';
+    let canettesTrouvees = [];
 
-        const paysValue = document.getElementById('pays').value;
-        const donnees = {
+    // Basculer entre les modes
+    function setMode(mode) {
+        document.getElementById('section-ajouter').style.display = mode === 'ajouter' ? 'block' : 'none';
+        document.getElementById('section-modifier').style.display = mode === 'modifier' ? 'block' : 'none';
+        document.getElementById('tab-ajouter').className = mode === 'ajouter' ? 'active' : '';
+        document.getElementById('tab-modifier').className = mode === 'modifier' ? 'active' : '';
+        document.getElementById('message').textContent = '';
+    }
+
+    function afficherMessage(texte, type) {
+        const div = document.getElementById('message');
+        div.textContent = texte;
+        div.className = type;
+    }
+
+    // AJOUTER
+    document.getElementById('form-ajouter').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        afficherMessage('Envoi en cours...', '');
+        
+        const payload = {
             nom: document.getElementById('nom').value,
             gamme: document.getElementById('gamme').value,
-            pays_origine: paysValue === "" ? null : paysValue,
+            pays_origine: document.getElementById('pays').value || null,
             etat: document.getElementById('etat').value,
             date_ajout: document.getElementById('date').value
         };
 
         try {
-            const reponse = await fetch('https://monster-api-vvz.onrender.com/api/canettes/', {
+            const res = await fetch(`${API_BASE}/`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': document.getElementById('password').value
-                },
-                body: JSON.stringify(donnees)
+                headers: { 'Content-Type': 'application/json', 'x-api-key': document.getElementById('password-add').value },
+                body: JSON.stringify(payload)
             });
-
-            const resultat = await reponse.json();
-
-            if (reponse.ok) {
-                messageDiv.textContent = resultat.message;
-                messageDiv.className = 'success';
-                document.getElementById('form-monster').reset();
+            const data = await res.json();
+            if (res.ok) {
+                afficherMessage(data.message, 'success');
+                document.getElementById('form-ajouter').reset();
             } else {
-                messageDiv.textContent = "Erreur : " + JSON.stringify(resultat.detail);
-                messageDiv.className = 'error';
+                afficherMessage(`Erreur : ${data.detail}`, 'error');
             }
-        } catch (erreur) {
-            messageDiv.textContent = "Erreur de connexion à l'API. Est-elle lancée ?";
-            messageDiv.className = 'error';
+        } catch (err) { afficherMessage("Erreur de connexion", 'error'); }
+    });
+
+    // RECHERCHE DYNAMIQUE (MODIFICATION)
+    document.getElementById('search-mod').addEventListener('input', async (e) => {
+        const nom = e.target.value;
+        const select = document.getElementById('select-mod');
+        const formMod = document.getElementById('form-modifier');
+        
+        if (nom.length < 2) {
+            select.style.display = 'none';
+            formMod.style.display = 'none';
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/recherche?nom=${nom}`);
+            canettesTrouvees = await res.json();
+            
+            if (canettesTrouvees.length > 0) {
+                select.innerHTML = '<option value="">-- Choisir une canette --</option>';
+                canettesTrouvees.forEach(c => {
+                    select.innerHTML += `<option value="${c.id}">${c.nom} (${c.gamme})</option>`;
+                });
+                select.style.display = 'block';
+            } else {
+                select.style.display = 'none';
+                formMod.style.display = 'none';
+            }
+        } catch (err) { console.error(err); }
+    });
+
+    // REMPLISSAGE DU FORMULAIRE
+    document.getElementById('select-mod').addEventListener('change', (e) => {
+        const id = parseInt(e.target.value);
+        const canette = canettesTrouvees.find(c => c.id === id);
+        const formMod = document.getElementById('form-modifier');
+
+        if (canette) {
+            document.getElementById('mod-id').value = canette.id;
+            document.getElementById('mod-nom').value = canette.nom;
+            document.getElementById('mod-gamme').value = canette.gamme;
+            document.getElementById('mod-pays').value = canette.pays_origine || '';
+            document.getElementById('mod-etat').value = canette.etat;
+            document.getElementById('mod-date').value = canette.date_ajout;
+            formMod.style.display = 'block';
+            afficherMessage('', '');
+        } else {
+            formMod.style.display = 'none';
         }
     });
+
+    // MODIFIER
+    document.getElementById('form-modifier').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        afficherMessage('Modification en cours...', '');
+        const id = document.getElementById('mod-id').value;
+        
+        const payload = {
+            nom: document.getElementById('mod-nom').value,
+            gamme: document.getElementById('mod-gamme').value,
+            pays_origine: document.getElementById('mod-pays').value || null,
+            etat: document.getElementById('mod-etat').value,
+            date_ajout: document.getElementById('mod-date').value
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-api-key': document.getElementById('password-mod').value },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok) afficherMessage("Canette modifiée avec succès !", 'success');
+            else afficherMessage(`Erreur : ${data.detail}`, 'error');
+        } catch (err) { afficherMessage("Erreur de connexion", 'error'); }
+    });
+
+    // SUPPRIMER
+    async function supprimerCanette() {
+        const mdp = document.getElementById('password-mod').value;
+        if (!mdp) {
+            afficherMessage("Veuillez entrer le mot de passe avant de supprimer.", 'error');
+            return;
+        }
+
+        const confirmation = confirm("Êtes-vous sûr de vouloir supprimer cette canette ? Cette action est irréversible.");
+        if (!confirmation) return;
+
+        afficherMessage('Suppression en cours...', '');
+        const id = document.getElementById('mod-id').value;
+
+        try {
+            const res = await fetch(`${API_BASE}/${id}`, {
+                method: 'DELETE',
+                headers: { 'x-api-key': mdp }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                afficherMessage("Canette supprimée définitivement.", 'success');
+                document.getElementById('form-modifier').style.display = 'none';
+                document.getElementById('select-mod').style.display = 'none';
+                document.getElementById('search-mod').value = '';
+            }
+            else afficherMessage(`Erreur : ${data.detail}`, 'error');
+        } catch (err) { afficherMessage("Erreur de connexion", 'error'); }
+    }
 </script>
 
 </body>
