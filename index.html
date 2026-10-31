@@ -71,7 +71,7 @@
             const reponse = await fetch('https://monster-api-vvz.onrender.com/api/canettes/', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                     'x-api-key': document.getElementById('password').value
                 },
                 body: JSON.stringify(donnees)
