@@ -32,7 +32,8 @@ class CanetteForm(BaseModel):
     pays_origine: Optional[str] = None
     etat: str = Field(..., pattern="^(Parfait état|Abîmée|Très abîmée)$")
     date_ajout: str
-
+    image_url: str | None = None
+    
     @field_validator("date_ajout")
     @classmethod
     def valider_et_formater_date(cls, valeur_saisie: str) -> str:
