@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma Collection - Monster</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: #fff; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .filters { background: #2c2c2c; padding: 20px; border-radius: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        label { font-weight: bold; color: #90ee90; font-size: 0.9em; }
+        input, select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #444; background: #444; color: white; box-sizing: border-box; }
+        button { grid-column: 1 / -1; padding: 10px; background: #90ee90; color: #000; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #76c776; }
+        
+        .results { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
+        .card { background: #2c2c2c; padding: 15px; border-radius: 8px; border-left: 5px solid #90ee90; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .card h3 { margin: 0 0 10px 0; }
+        .card p { margin: 5px 0; font-size: 0.9em; color: #ccc; }
+        .tag { display: inline-block; background: #444; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; margin-right: 5px; margin-bottom: 5px; }
+        .nav-link { color: #90ee90; text-decoration: none; display: inline-block; margin-bottom: 20px; font-weight: bold; }
+        .nav-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Ma Collection 🟢</h2>
+    <a href="index.html" class="nav-link">← Ajouter une nouvelle canette</a>
+    
+    <!-- Zone de filtrage -->
+    <div class="filters">
+        <div>
+            <label for="search-nom">Nom (approximatif)</label>
+            <input type="text" id="search-nom" placeholder="ex: Mango loca...">
+        </div>
+        <div>
+            <label for="filter-gamme">Gamme</label>
+            <select id="filter-gamme">
+                <option value="">Toutes les gammes</option>
+                <!-- Sera rempli par l'API -->
+            </select>
+        </div>
+        <div>
+            <label for="filter-pays">Pays</label>
+            <select id="filter-pays">
+                <option value="">Tous les pays</option>
+                <!-- Sera rempli par l'API -->
+            </select>
+        </div>
+        <div>
+            <label for="filter-periode">Période d'ajout</label>
+            <select id="filter-periode">
+                <option value="">Toutes les dates</option>
+                <option value="ce_mois">Ce mois-ci</option>
+                <option value="cette_annee">Cette année</option>
+                <option value="1_an">Il y a 1 an</option>
+                <option value="2_ans">Il y a 2 ans</option>
+            </select>
+        </div>
+        <button onclick="lancerRecherche()">Rechercher</button>
+    </div>
+
+    <!-- Zone d'affichage des résultats -->
+    <div id="results-container" class="results"></div>
+</div>
+
+<script>
+    const API_BASE = 'http://localhost:8000/api';
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            // 1. Charger les gammes existantes
+            const resGammes = await fetch(`${API_BASE}/filtres/gammes`);
+            const gammes = await resGammes.json();
+            const selectGamme = document.getElementById('filter-gamme');
+            gammes.forEach(g => {
+                selectGamme.innerHTML += `<option value="${g}">${g}</option>`;
+            });
+
+            // 2. Charger les pays existants
+            const resPays = await fetch(`${API_BASE}/filtres/pays`);
+            const pays = await resPays.json();
+            const selectPays = document.getElementById('filter-pays');
+            pays.forEach(p => {
+                selectPays.innerHTML += `<option value="${p}">${p}</option>`;
+            });
+            
+            // 3. Lancer une recherche vide pour tout afficher au démarrage
+            lancerRecherche();
+        } catch (erreur) {
+            console.error("Erreur de chargement des filtres :", erreur);
+        }
+    });
+
+    async function lancerRecherche() {
+        const conteneur = document.getElementById('results-container');
+        conteneur.innerHTML = '<p>Recherche en cours...</p>';
+
+        const params = new URLSearchParams();
+        
+        const nom = document.getElementById('search-nom').value;
+        if (nom) params.append('nom', nom);
+        
+        const gamme = document.getElementById('filter-gamme').value;
+        if (gamme) params.append('gamme', gamme);
+        
+        const pays = document.getElementById('filter-pays').value;
+        if (pays) params.append('pays', pays);
+        
+        const periode = document.getElementById('filter-periode').value;
+        if (periode) params.append('periode', periode);
+
+        try {
+            const reponse = await fetch(`${API_BASE}/canettes/recherche?${params.toString()}`);
+            const canettes = await reponse.json();
+
+            conteneur.innerHTML = ''; 
+
+            if (canettes.length === 0) {
+                conteneur.innerHTML = '<p>Aucune canette trouvée avec ces critères.</p>';
+                return;
+            }
+
+            canettes.forEach(canette => {
+                const paysAffiche = canette.pays_origine ? canette.pays_origine : "Inconnu";
+                
+                const carteHTML = `
+                    <div class="card">
+                        <h3>${canette.nom}</h3>
+                        <p><span class="tag">${canette.gamme}</span> <span class="tag">${paysAffiche}</span></p>
+                        <p><strong>État :</strong> ${canette.etat}</p>
+                        <p><strong>Ajoutée en :</strong> ${canette.date_ajout}</p>
+                    </div>
+                `;
+                conteneur.innerHTML += carteHTML;
+            });
+
+        } catch (erreur) {
+            conteneur.innerHTML = '<p style="color: #ff6b6b;">Erreur de connexion à l\'API. Est-elle lancée ?</p>';
+        }
+    }
+</script>
+
+</body>
+</html>

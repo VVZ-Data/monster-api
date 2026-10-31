@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajout - Collection Monster</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #1a1a1a; color: #fff; padding: 20px; }
+        .container { max-width: 400px; margin: auto; background: #2c2c2c; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        label { display: block; margin-top: 15px; font-weight: bold; color: #90ee90; }
+        input, select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #444; background: #444; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; margin-top: 20px; background: #90ee90; color: #000; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #76c776; }
+        #message { margin-top: 15px; text-align: center; font-weight: bold; }
+        .success { color: #90ee90; }
+        .error { color: #ff6b6b; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Nouvelle Canette 🟢</h2>
+    <form id="form-monster">
+        
+        <label for="nom">Nom de la canette *</label>
+        <input type="text" id="nom" required placeholder="ex: Mango Loco">
+        
+        <label for="gamme">Gamme *</label>
+        <input type="text" id="gamme" required placeholder="ex: Juice, Ultra...">
+        
+        <label for="pays">Pays d'origine (Optionnel)</label>
+        <input type="text" id="pays" placeholder="ex: USA">
+        
+        <label for="etat">État de la canette *</label>
+        <select id="etat" required>
+            <option value="Parfait état">Parfait état</option>
+            <option value="Abîmée">Abîmée</option>
+            <option value="Très abîmée">Très abîmée</option>
+        </select>
+        
+        <label for="date">Date d'ajout *</label>
+        <input type="text" id="date" required placeholder="MM-YYYY ou YYYY-MM">
+        
+        <button type="submit">Ajouter à la collection</button>
+    </form>
+    
+    <div id="message"></div>
+</div>
+
+<script>
+    document.getElementById('form-monster').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const messageDiv = document.getElementById('message');
+        messageDiv.className = '';
+        messageDiv.textContent = 'Envoi en cours...';
+
+        const paysValue = document.getElementById('pays').value;
+        const donnees = {
+            nom: document.getElementById('nom').value,
+            gamme: document.getElementById('gamme').value,
+            pays_origine: paysValue === "" ? null : paysValue,
+            etat: document.getElementById('etat').value,
+            date_ajout: document.getElementById('date').value
+        };
+
+        try {
+            const reponse = await fetch('http://localhost:8000/api/canettes/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(donnees)
+            });
+
+            const resultat = await reponse.json();
+
+            if (reponse.ok) {
+                messageDiv.textContent = resultat.message;
+                messageDiv.className = 'success';
+                document.getElementById('form-monster').reset();
+            } else {
+                messageDiv.textContent = "Erreur : " + JSON.stringify(resultat.detail);
+                messageDiv.className = 'error';
+            }
+        } catch (erreur) {
+            messageDiv.textContent = "Erreur de connexion à l'API. Est-elle lancée ?";
+            messageDiv.className = 'error';
+        }
+    });
+</script>
+
+</body>
+</html>
