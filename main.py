@@ -33,7 +33,7 @@ class CanetteForm(BaseModel):
     etat: str = Field(..., pattern="^(Parfait état|Abîmée|Très abîmée)$")
     date_ajout: str
     image_url: str | None = None
-    
+
     @field_validator("date_ajout")
     @classmethod
     def valider_et_formater_date(cls, valeur_saisie: str) -> str:
@@ -56,11 +56,11 @@ def ajouter_canette(canette: CanetteForm):
     cursor = conn.cursor()
     try:
         requete_sql = """
-            INSERT INTO collection_monster (nom, gamme, pays_origine, etat, date_ajout)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO collection_monster (nom, gamme, pays_origine, etat, date_ajout, image_url)
+            VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id, TO_CHAR(date_ajout, 'YYYY-MM');
         """
-        valeurs = (canette.nom, canette.gamme, canette.pays_origine, canette.etat, canette.date_ajout)
+        valeurs = (canette.nom, canette.gamme, canette.pays_origine, canette.etat, canette.date_ajout, canette.image_url)
         cursor.execute(requete_sql, valeurs)
         resultat = cursor.fetchone()
         conn.commit()
@@ -104,7 +104,7 @@ def rechercher_canettes(
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    requete = "SELECT id, nom, gamme, pays_origine, etat, TO_CHAR(date_ajout, 'YYYY-MM') FROM collection_monster WHERE 1=1"
+    requete = "SELECT id, nom, gamme, pays_origine,image_url, etat, TO_CHAR(date_ajout, 'YYYY-MM') FROM collection_monster WHERE 1=1"
     valeurs = []
     
     if nom:
@@ -139,7 +139,7 @@ def rechercher_canettes(
         for row in resultats:
             canettes.append({
                 "id": row[0], "nom": row[1], "gamme": row[2],
-                "pays_origine": row[3], "etat": row[4], "date_ajout": row[5]
+                "pays_origine": row[3], "image_url": row[4], "etat": row[5], "date_ajout": row[6]
             })
         return canettes
     finally:
@@ -153,12 +153,11 @@ def modifier_canette(id_canette: int, canette: CanetteForm):
     try:
         requete_sql = """
             UPDATE collection_monster 
-            SET nom = %s, gamme = %s, pays_origine = %s, etat = %s, date_ajout = %s
+            SET nom = %s, gamme = %s, pays_origine = %s, etat = %s, date_ajout = %s, image_url = %s
             WHERE id = %s
             RETURNING id;
         """
-        # canette.date_ajout contient la date formatée grâce au validateur Pydantic
-        valeurs = (canette.nom, canette.gamme, canette.pays_origine, canette.etat, canette.date_ajout, id_canette)
+        valeurs = (canette.nom, canette.gamme, canette.pays_origine, canette.etat, canette.date_ajout, canette.image_url, id_canette)
         
         cursor.execute(requete_sql, valeurs)
         if cursor.fetchone() is None:
