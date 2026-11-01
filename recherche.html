@@ -125,8 +125,13 @@
             canettes.forEach(canette => {
                 const paysAffiche = canette.pays_origine ? canette.pays_origine : "Inconnu";
                 
+                // 1. On prépare l'image (si elle existe dans la base de données)
+                const imgHtml = canette.image_url ? `<img src="${canette.image_url}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; float: right; margin-left: 10px;">` : '';
+                
+                // 2. On injecte l'image (${imgHtml}) dans la carte et on ajoute "overflow: hidden" pour le design
                 const carteHTML = `
-                    <div class="card">
+                    <div class="card" style="overflow: hidden;">
+                        ${imgHtml}
                         <h3>${canette.nom}</h3>
                         <p><span class="tag">${canette.gamme}</span> <span class="tag">${paysAffiche}</span></p>
                         <p><strong>État :</strong> ${canette.etat}</p>

@@ -51,6 +51,8 @@
                 <option value="Très abîmée">Très abîmée</option>
             </select>
             <label>Date d'ajout *</label><input type="text" id="date" required placeholder="MM-YYYY">
+            <label>Photo de la canette (Optionnelle)</label>
+            <input type="file" id="photo-add" accept="image/*">
             <label>Mot de passe *</label><input type="password" id="password-add" required>
             <button type="submit" class="action-btn">Ajouter à la collection</button>
         </form>
@@ -74,6 +76,8 @@
                 <option value="Très abîmée">Très abîmée</option>
             </select>
             <label>Date *</label><input type="text" id="mod-date" required>
+            <label>Photo de la canette (Optionnelle)</label>
+            <input type="file" id="photo-mod" accept="image/*">
             <label>Mot de passe *</label><input type="password" id="password-mod" required>
             
             <div class="action-group">
@@ -99,6 +103,26 @@
         document.getElementById('message').textContent = '';
     }
 
+    async function uploaderImage(inputId) {
+        const fichier = document.getElementById(inputId).files[0];
+        if (!fichier) return null; // Si aucune photo n'est mise, on renvoie null
+
+        const formData = new FormData();
+        formData.append("file", fichier);
+        formData.append("upload_preset", "monster"); // Ton preset Cloudinary
+
+        try {
+            const res = await fetch("https://api.cloudinary.com/v1_1/kcvqgk24/image/upload", {
+                method: "POST",
+                body: formData
+            });
+            const data = await res.json();
+            return data.secure_url; // Renvoie le lien final de l'image
+        } catch (err) {
+            console.error("Erreur d'upload de l'image", err);
+            return null;
+        }
+    }
     function afficherMessage(texte, type) {
         const div = document.getElementById('message');
         div.textContent = texte;
@@ -110,12 +134,15 @@
         e.preventDefault();
         afficherMessage('Envoi en cours...', '');
         
+        const lienImage = await uploaderImage('photo-add');
+
         const payload = {
             nom: document.getElementById('nom').value,
             gamme: document.getElementById('gamme').value,
             pays_origine: document.getElementById('pays').value || null,
             etat: document.getElementById('etat').value,
-            date_ajout: document.getElementById('date').value
+            date_ajout: document.getElementById('date').value,
+            image_url: lienImage
         };
 
         try {
@@ -189,6 +216,8 @@
         afficherMessage('Modification en cours...', '');
         const id = document.getElementById('mod-id').value;
         
+        const lienImage = await uploaderImage('photo-mod');
+
         const payload = {
             nom: document.getElementById('mod-nom').value,
             gamme: document.getElementById('mod-gamme').value,
@@ -196,7 +225,9 @@
             etat: document.getElementById('mod-etat').value,
             date_ajout: document.getElementById('mod-date').value
         };
-
+        if (lienImage) {
+            payload.image_url = lienImage;
+        }
         try {
             const res = await fetch(`${API_BASE}/${id}`, {
                 method: 'PUT',
